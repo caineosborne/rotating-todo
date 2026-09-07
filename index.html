@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#19241f" />
+    <title>Rotating — a kinder to-do list</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="loading-screen" class="loading-screen" role="status" aria-live="polite">
+      <div class="loading-orbit" aria-hidden="true">↻</div>
+      <p>Loading your rotation…</p>
+    </div>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">↻</span><span>rotating</span></div>
+        <p class="sidebar-note">Small things worth returning to.</p>
+        <div class="sidebar-heading"><span>Your boards</span><span id="board-count">0</span></div>
+        <nav id="board-list" aria-label="Boards"></nav>
+        <form id="board-form" class="stack-form">
+          <label class="sr-only" for="board-name">New board name</label>
+          <div class="input-row">
+            <input id="board-name" name="name" maxlength="120" placeholder="New board…" autocomplete="off" required />
+            <button id="add-board" class="icon-button filled" type="submit" aria-label="Add board">+</button>
+          </div>
+        </form>
+        <p id="sync-status" class="sync-note" data-status="loading"><span class="sync-dot"></span><span id="sync-label">Loading…</span></p>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">A living list</p>
+            <h1 id="board-title">Your rotation</h1>
+          </div>
+          <div class="board-actions" id="board-actions" hidden>
+            <button id="rename-board" class="quiet-button" type="button">Rename</button>
+            <button id="delete-board" class="quiet-button danger" type="button">Delete board</button>
+          </div>
+        </header>
+
+        <section class="intro" id="intro">
+          <div class="orbit" aria-hidden="true"><span>↻</span></div>
+          <div>
+            <p class="eyebrow">Keep it moving</p>
+            <p class="intro-copy">Nothing is ever finished for good. Action an item when you return to it, and it will find its place in the rotation.</p>
+          </div>
+        </section>
+
+        <section class="list-section" aria-labelledby="list-heading">
+          <div id="save-error" class="save-error" role="alert" hidden>
+            <span id="save-error-message"></span>
+            <button id="retry-save" type="button">Try again</button>
+          </div>
+          <div class="section-heading">
+            <div><p class="eyebrow">Next up</p><h2 id="list-heading">The rotation</h2></div>
+            <span class="item-count" id="item-count">0 items</span>
+          </div>
+          <form id="item-form" class="add-item-form" hidden>
+            <label class="sr-only" for="item-name">New item name</label>
+            <input id="item-name" name="name" maxlength="120" placeholder="What needs returning to?" autocomplete="off" required />
+            <button id="add-item" class="primary-button" type="submit">Add item <span>↵</span></button>
+          </form>
+          <div id="empty-state" class="empty-state">Create a board to start your first rotation.</div>
+          <div id="item-list" class="item-list" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
