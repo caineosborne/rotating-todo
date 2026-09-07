@@ -37,4 +37,4 @@ This intentionally has no authentication. Treat the Blob URL/token as a private 
 
 ## Saving and conflicts
 
-The interface shows a blocking loading screen on startup and an explicit `Saving…` state for each change. Writes are queued in the browser so rapid changes are sent in order. Blob writes use the version read with the data; if another browser saves first, the app reports the conflict instead of silently overwriting newer data and offers a retry.
+The interface shows a blocking loading screen on startup and an explicit `Saving…` state for each change. Writes are queued in the browser so rapid changes are sent in order. Blob writes use the version read with the data; if another browser saves first, the API reloads the newest data and retries the requested mutation before reporting a conflict. Newer data is never silently overwritten.

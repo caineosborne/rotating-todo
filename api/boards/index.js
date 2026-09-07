@@ -1,5 +1,5 @@
 import { createBoard } from '../../lib/model.js';
-import { readData, writeData } from '../../lib/store.js';
+import { mutateData, readData } from '../../lib/store.js';
 import { handleError, methodNotAllowed, requireName } from '../_helpers.js';
 
 export default async function handler(req, res) {
@@ -9,8 +9,8 @@ export default async function handler(req, res) {
 
     const name = requireName(res, req.body?.name, 'Board name');
     if (!name) return;
-    const data = createBoard(await readData(), name);
-    return res.status(201).json(await writeData(data));
+    const data = await mutateData((current) => createBoard(current, name));
+    return res.status(201).json(data);
   } catch (error) {
     return handleError(res, error);
   }

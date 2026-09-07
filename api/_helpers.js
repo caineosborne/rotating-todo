@@ -13,10 +13,19 @@ export function notFound(res, message = 'Not found') {
 
 export function handleError(res, error) {
   console.error(error);
+  if (Number.isInteger(error?.status) && error.status >= 400 && error.status < 500) {
+    return res.status(error.status).json({ error: error.message });
+  }
   if (error?.name === 'BlobPreconditionFailedError') {
     return res.status(409).json({ error: 'The list changed elsewhere. Please try your change again.' });
   }
   return res.status(500).json({ error: 'Something went wrong while saving your changes.' });
+}
+
+export function requestError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
 }
 
 export function requireName(res, value, label) {
