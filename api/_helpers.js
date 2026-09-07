@@ -16,9 +16,6 @@ export function handleError(res, error) {
   if (Number.isInteger(error?.status) && error.status >= 400 && error.status < 500) {
     return res.status(error.status).json({ error: error.message });
   }
-  if (error?.name === 'BlobPreconditionFailedError') {
-    return res.status(409).json({ error: 'The list changed elsewhere. Please try your change again.' });
-  }
   return res.status(500).json({ error: 'Something went wrong while saving your changes.' });
 }
 
