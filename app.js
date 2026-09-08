@@ -1,10 +1,12 @@
 import { sortItems } from './lib/priority.js';
+import { calendarDaysSince, dateInputToISOString, toDateInputValue } from './lib/dates.js';
 
 const state = {
   data: { boards: [] },
   selectedBoardId: null,
   pending: new Set(),
   syncStatus: 'loading',
+  editingItemId: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -13,6 +15,7 @@ const itemList = $('#item-list');
 let writeQueue = Promise.resolve();
 let lastFailedSave = null;
 let syncedTimer;
+let dayRolloverTimer;
 
 async function request(path, options = {}) {
   const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
@@ -37,7 +40,18 @@ async function load() {
   } finally {
     $('#loading-screen').classList.add('is-hidden');
     render();
+    scheduleDayRollover();
   }
+}
+
+function scheduleDayRollover() {
+  clearTimeout(dayRolloverTimer);
+  const now = new Date();
+  const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  dayRolloverTimer = setTimeout(() => {
+    render();
+    scheduleDayRollover();
+  }, nextDay.getTime() - now.getTime() + 100);
 }
 
 function currentBoard() {
@@ -159,10 +173,25 @@ function itemTemplate(item) {
 
 function humanDate(value) {
   if (!value) return 'Never';
-  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000);
-  if (days <= 0) return 'Today';
+  const days = calendarDaysSince(value);
+  if (days === null) return 'Never';
+  if (days === 0) return 'Today';
   if (days === 1) return 'Yesterday';
   return `${days} days ago`;
+}
+
+function openItemEditor(item) {
+  state.editingItemId = item.id;
+  $('#edit-item-name').value = item.name;
+  $('#edit-item-date').value = toDateInputValue(item.lastActioned);
+  $('#edit-item-date').max = toDateInputValue(new Date());
+  $('#edit-item-dialog').showModal();
+  $('#edit-item-name').focus();
+}
+
+function closeItemEditor() {
+  state.editingItemId = null;
+  if ($('#edit-item-dialog').open) $('#edit-item-dialog').close();
 }
 
 function escapeHtml(value) {
@@ -222,15 +251,39 @@ itemList.addEventListener('click', (event) => {
     saveChange({ key: `item:${itemId}`, operation: () => request(base, { method: 'PATCH', body: JSON.stringify({ favourite: !item.favourite }) }), successMessage: item.favourite ? 'Favourite removed' : 'Favourite saved' });
   }
   if (button.dataset.action === 'edit') {
-    const name = prompt('Rename item', item.name);
-    if (name === null) return;
-    if (!name.trim()) return notify('Item name cannot be empty');
-    saveChange({ key: `item:${itemId}`, operation: () => request(base, { method: 'PATCH', body: JSON.stringify({ name }) }), successMessage: 'Item renamed' });
+    openItemEditor(item);
   }
   if (button.dataset.action === 'delete') {
     if (!confirm(`Delete “${item.name}”?`)) return;
     saveChange({ key: `item:${itemId}`, operation: () => request(base, { method: 'DELETE' }), successMessage: 'Item deleted' });
   }
+});
+
+$('#edit-item-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const itemId = state.editingItemId;
+  const name = $('#edit-item-name').value.trim();
+  const dateValue = $('#edit-item-date').value;
+  if (!itemId || !name) return notify('Item name cannot be empty');
+  const lastActioned = dateInputToISOString(dateValue);
+  const boardId = state.selectedBoardId;
+  closeItemEditor();
+  saveChange({
+    key: `item:${itemId}`,
+    operation: () => request(`/api/boards/${boardId}/items/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, lastActioned }),
+    }),
+    successMessage: 'Item updated',
+  });
+});
+
+$('#cancel-item-edit').addEventListener('click', closeItemEditor);
+$('#cancel-item-edit-secondary').addEventListener('click', closeItemEditor);
+$('#clear-item-date').addEventListener('click', () => { $('#edit-item-date').value = ''; });
+$('#edit-item-dialog').addEventListener('close', () => { state.editingItemId = null; });
+$('#edit-item-dialog').addEventListener('click', (event) => {
+  if (event.target === $('#edit-item-dialog')) closeItemEditor();
 });
 
 $('#rename-board').addEventListener('click', () => {

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { priorityAge, sortItems } from './lib/priority.js';
 import { actionItem, createBoard, createItem, emptyData, removeItem, updateItem } from './lib/model.js';
+import { calendarDaysSince, dateInputToISOString, toDateInputValue } from './lib/dates.js';
 
 const now = Date.parse('2026-09-07T12:00:00.000Z');
 
@@ -40,4 +41,18 @@ test('model supports board/item creation, updates, actioning, and removal', () =
   assert.equal(data.boards[0].items[0].lastActioned, '2026-09-07T12:00:00.000Z');
   data = removeItem(data, board.id, item.id);
   assert.equal(data.boards[0].items.length, 0);
+});
+
+test('calendar days change at local midnight rather than after 24 hours', () => {
+  const now = new Date(2026, 8, 8, 0, 15);
+  const yesterday = new Date(2026, 8, 7, 23, 45);
+  assert.equal(calendarDaysSince(yesterday, now), 1);
+});
+
+test('manual action dates preserve the selected local calendar day', () => {
+  const now = new Date(2026, 8, 8, 9, 30);
+  const value = dateInputToISOString('2026-09-05', now);
+  assert.equal(toDateInputValue(value), '2026-09-05');
+  assert.equal(calendarDaysSince(value, now), 3);
+  assert.equal(dateInputToISOString('', now), null);
 });

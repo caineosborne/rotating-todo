@@ -16,6 +16,15 @@ export default async function handler(req, res) {
       if (typeof req.body.favourite !== 'boolean') return badRequest(res, 'Favourite must be a boolean');
       updates.favourite = req.body.favourite;
     }
+    if (req.body?.lastActioned !== undefined) {
+      if (req.body.lastActioned === null) {
+        updates.lastActioned = null;
+      } else if (typeof req.body.lastActioned !== 'string' || Number.isNaN(Date.parse(req.body.lastActioned))) {
+        return badRequest(res, 'Last actioned must be a valid date or null');
+      } else {
+        updates.lastActioned = new Date(req.body.lastActioned).toISOString();
+      }
+    }
     const data = await mutateData((current) => {
       const board = current.boards.find((entry) => entry.id === req.query.boardId);
       const item = board?.items.find((entry) => entry.id === req.query.itemId);
